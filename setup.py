@@ -5,8 +5,9 @@ meta = dict(
     version          = "0.0.1",
     packages         = ["amidala"],
     install_requires = [
-        "boto"
-        ],
+        "boto",
+        "docopt",
+    ],
     )
 
 setup(**meta)
