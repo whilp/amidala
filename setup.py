@@ -8,6 +8,9 @@ meta = dict(
         "boto",
         "docopt",
     ],
+    scripts = [
+        "scripts/amidala",
+    ],
     )
 
 setup(**meta)
