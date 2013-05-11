@@ -1,5 +1,5 @@
 #!/bin/bash
 
-env=$BASH_SOURCE/../../env
+dir=$BASH_SOURCE/../../
 
-exec chpst -e $env python $*
+exec chpst -e $dir/env $dir/bin/python $*
