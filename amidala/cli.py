@@ -21,7 +21,6 @@ log = logging.getLogger("amidala.cli")
 def main():
     args = docopt.docopt(__doc__, version=amidala.__version__)
 
-    print args
     log.addHandler(logging.StreamHandler())
     log.level = log_level(int(args["--verbose"]))
 
