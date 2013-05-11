@@ -1,0 +1,9 @@
+* =amidala=
+
+=amidala= makes AMIs.
+
+#+BEGIN_QUOTE
+I have no time for you now. I must first liberate the planet.
+#+END_QUOTE
+
+[[http://www.imdb.com/character/ch0000027/quotes][Queen Amidala, Star Wars: Episode I - The Phantom Menace]]
