@@ -76,7 +76,7 @@ def main():
     ec2.detach_volume(volume.id, instance, device)
 
     log.debug("snapshotting %s", volume.id)
-    snap = ec2.create_snapshot(volume)
+    snap = ec2.create_snapshot(volume.id)
 
     ebs = boto.ec2.blockdevicemapping.EBSBlockDeviceType(snapshot_id=snap.id)
     blocks = boto.ec2.blockdevicemapping.BlockDeviceMapping()
