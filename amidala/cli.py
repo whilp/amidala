@@ -35,7 +35,7 @@ def main():
     region = "us-west-1"
     ec2 = boto.ec2.connect_to_region(region)
 
-    instance = boto.utils.get_instance_metadata()["instance_id"]
+    instance = boto.utils.get_instance_metadata()["instance-id"]
     device = "/dev/xvdb"
 
     volume = None
