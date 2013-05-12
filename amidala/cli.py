@@ -77,5 +77,5 @@ def main():
         root_device_name="/dev/sda1",
         block_device_map=blocks)
 
-def log_level(n, default=logging.ERROR):
+def log_level(n, default=logging.DEBUG):
     return max(default - (10 * n), 1)
