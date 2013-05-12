@@ -84,6 +84,11 @@ def main():
     log.debug("snapshotting %s", volume.id)
     snap = ec2.create_snapshot(volume.id)
 
+    while volume.status != "available":
+        log.debug("waiting for volume %s to detach", volume.id)
+        time.sleep(1)
+        volume.update()
+
     log.debug("deleting %s", volume.id)
     ec2.delete_volume(volume.id)
 
