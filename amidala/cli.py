@@ -13,6 +13,7 @@ import logging
 import subprocess
 import sys
 import tempfile
+import time
 
 import boto.ec2
 import boto.utils
@@ -51,6 +52,11 @@ def main():
     if volume:
         parent = ec2.get_all_volumes([volume])
         snapshot = ec2.create_snapshot(parent.id)
+        while snap.status != "completed":
+            log.debug("waiting for snapshot %s to complete", snapshot.id)
+            time.sleep(1)
+            snapshot.update()
+
         volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot.id)
     else:
         log.debug("creating %dGB volume in %s", size, zone)
@@ -77,6 +83,11 @@ def main():
 
     log.debug("snapshotting %s", volume.id)
     snap = ec2.create_snapshot(volume.id)
+
+    while snap.status != "completed":
+        log.debug("waiting for snapshot %s to complete", snap.id)
+        time.sleep(1)
+        snap.update()
 
     ebs = boto.ec2.blockdevicemapping.EBSBlockDeviceType(snapshot_id=snap.id)
     blocks = boto.ec2.blockdevicemapping.BlockDeviceMapping()
