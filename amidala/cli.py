@@ -63,14 +63,14 @@ def main():
 
     
     log.debug("mounting device %s at temporary mount %s", device, mount)
-    ret = subprocess.call(["sudo", "mount", device, mount])
+    ret = subprocess.call(["sudo", "/bin/mount", device, mount])
 
     exe = args["<build>"]
     log.debug("running build phase `%s`", exe)    
     subprocess.call(exe)
 
     log.debug("umounting temporary mount %s", mount)
-    ret = subprocess.call(["sudo", "umount", mount])
+    ret = subprocess.call(["sudo", "/bin/umount", "-l", mount])
 
     log.debug("detaching volume %s from instance %s at %s", volume.id, instance, device)
     ec2.detach_volume(volume.id, instance, device)
