@@ -45,7 +45,7 @@ def main():
         snapshot = ec2.create_snapshot(parent)
         volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot)
     else:    
-        volume = ec2.create_volume(size, region)
+        volume = ec2.create_volume(size, region + "a")
 
     ec2.attach_volume(volume.id, instance, device)
 
