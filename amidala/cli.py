@@ -25,7 +25,10 @@ log = logging.getLogger("amidala.cli")
 def main():
     args = docopt.docopt(__doc__, version=amidala.__version__)
 
-    log.addHandler(logging.StreamHandler())
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(fmt="%(asctime)s %(name)s %(message)s")
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
     log.level = log_level(int(args["--verbose"]))
 
     if args["--version"]:
