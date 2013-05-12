@@ -84,6 +84,9 @@ def main():
     log.debug("snapshotting %s", volume.id)
     snap = ec2.create_snapshot(volume.id)
 
+    log.debug("deleting %s", volume.id)
+    ec2.delete_volume(volume.id)
+
     while snap.status != "completed":
         log.debug("waiting for snapshot %s to complete", snap.id)
         time.sleep(1)
