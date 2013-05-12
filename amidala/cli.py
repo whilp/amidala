@@ -35,12 +35,15 @@ def main():
         sys.stdout.write(amidala.__version__)
         return 0
 
-    region = "us-west-1"
+    meta = boto.utils.get_instance_metadata()
+    instance = meta["instance-id"]
+    zone = meta["placement"]["availability-zone"]
+    region = zone[:-1]
+    log.debug("running on instance %s in %s", instance, zone)
+
     log.debug("connecting to %s", region)
     ec2 = boto.ec2.connect_to_region(region)
 
-    instance = boto.utils.get_instance_metadata()["instance-id"]
-    log.debug("running on instance %s", instance)
     device = "/dev/xvdb"
 
     volume = None
@@ -50,7 +53,6 @@ def main():
         snapshot = ec2.create_snapshot(parent)
         volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot)
     else:
-        zone = region + "a"
         log.debug("creating %dGB volume in %s", size, zone)
         volume = ec2.create_volume(size, zone)
 
