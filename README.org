@@ -15,3 +15,11 @@ virtualenv .
 ./bin/python setup.py develop
 ./bin/python -m amidala.tests.all
 #+END_SRC
+An interactive repl is available (requires =chpst= from the runit suite):
+
+#+BEGIN_SRC
+mkdir -p env
+echo xxx > env/AWS_ACCESS_KEY_ID
+echo xxx > env/AWS_SECRET_ACCESS_KEY
+./scripts/repl
+#+END_SRC
