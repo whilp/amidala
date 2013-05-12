@@ -44,7 +44,7 @@ def main():
     log.debug("connecting to %s", region)
     ec2 = boto.ec2.connect_to_region(region)
 
-    device = "/dev/xvdb"
+    device = "/dev/xvdc"
 
     volume = None
     size = 10
