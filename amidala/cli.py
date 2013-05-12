@@ -50,8 +50,8 @@ def main():
     size = 10
     if volume:
         parent = ec2.get_all_volumes([volume])
-        snapshot = ec2.create_snapshot(parent)
-        volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot)
+        snapshot = ec2.create_snapshot(parent.id)
+        volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot.id)
     else:
         log.debug("creating %dGB volume in %s", size, zone)
         volume = ec2.create_volume(size, zone)
