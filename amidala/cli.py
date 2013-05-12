@@ -36,9 +36,11 @@ def main():
         return 0
 
     region = "us-west-1"
+    log.debug("connecting to %s", region)
     ec2 = boto.ec2.connect_to_region(region)
 
     instance = boto.utils.get_instance_metadata()["instance-id"]
+    log.debug("running on instance %s", instance)
     device = "/dev/xvdb"
 
     volume = None
@@ -47,35 +49,55 @@ def main():
         parent = ec2.get_all_volumes([volume])
         snapshot = ec2.create_snapshot(parent)
         volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot)
-    else:    
-        volume = ec2.create_volume(size, region + "a")
+    else:
+        zone = region + "a"
+        log.debug("creating %dGB volume in %s", size, zone)
+        volume = ec2.create_volume(size, zone)
 
+    log.debug("attaching volume %s to instance %s at %s", volume.id, instance, device)
     ec2.attach_volume(volume.id, instance, device)
 
     mount = tempfile.mkdtemp()
 
+    
+    log.debug("mounting device %s at temporary mount %s", device, mount)
     ret = subprocess.call(["sudo", "mount", device, mount])
 
     exe = args["<build>"]
+    log.debug("running build phase `%s`", exe)    
     subprocess.call(exe)
 
+    log.debug("umounting temporary mount %s", mount)
     ret = subprocess.call(["sudo", "umount", mount])
 
+    log.debug("detaching volume %s from instance %s at %s", volume.id, instance, device)
     ec2.detach_volume(volume.id, instance, device)
 
+    log.debug("snapshotting %s", volume.id)
     snap = ec2.create_snapshot(volume)
 
     ebs = boto.ec2.blockdevicemapping.EBSBlockDeviceType(snapshot_id=snap.id)
     blocks = boto.ec2.blockdevicemapping.BlockDeviceMapping()
     blocks["/dev/sda1"] = ebs
-    
+
+    name = "amidala-test"
+    architecture = "x86_64"
+    root_device_name = "/dev/sda1"
+    log.debug("registering %s image '%s' with root snapshot %s at device %s",
+              architecture,
+              name,
+              snap.id,
+              root_device_name,
+    )
     ami = ec2.register_image(
-        name="amidala-test",
-        architecture="x86_64",
+        name=name,
+        architecture=architecture,
         #kernel_id
         #ramdisk_id
-        root_device_name="/dev/sda1",
+        root_device_name=root_device_name,
         block_device_map=blocks)
+
+    log.debug("created ami %s", ami.id)
 
 def log_level(n, default=logging.DEBUG):
     return max(default - (10 * n), 1)
