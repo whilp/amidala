@@ -102,7 +102,7 @@ def main():
               snap.id,
               root_device_name,
     )
-    ami = ec2.register_image(
+    image = ec2.register_image(
         name=name,
         architecture=architecture,
         #kernel_id
@@ -110,7 +110,7 @@ def main():
         root_device_name=root_device_name,
         block_device_map=blocks)
 
-    log.debug("created ami %s", ami.id)
+    log.debug("created ami %s", image)
 
 def log_level(n, default=logging.DEBUG):
     return max(default - (10 * n), 1)
