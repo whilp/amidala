@@ -1,7 +1,7 @@
 """amidala
 
 Usage:
-        amidala [options] <volume> <build>
+        amidala [options] <base> <build>
 
 Options:
         -h --help       help
@@ -36,7 +36,7 @@ def main():
         sys.stdout.write(amidala.__version__)
         return 0
 
-    parent = args["<volume>"]
+    base = args["<base>"]
     exe = args["<build>"]
     device = "/dev/xvdc"
 
@@ -49,14 +49,7 @@ def main():
     log.debug("connecting to %s", region)
     ec2 = boto.ec2.connect_to_region(region)
 
-    parent = ec2.get_all_volumes([parent])
-    snapshot = ec2.create_snapshot(parent.id)
-    while snap.status != "completed":
-        log.debug("waiting for snapshot %s to complete", snapshot.id)
-        time.sleep(1)
-        snapshot.update()
-
-    volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot.id)
+    volume = ec2.create_volume(parent.size, parent.zone, snapshot=base)
 
     log.debug("attaching volume %s to instance %s at %s", volume.id, instance, device)
     ec2.attach_volume(volume.id, instance, device)
