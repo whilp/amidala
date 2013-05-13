@@ -37,6 +37,9 @@ def main():
         sys.stdout.write(amidala.__version__)
         return 0
 
+    # TODO: support running outside of EC2.
+    #       - --instance flag
+    #       - create instance, mount, build, unmount, ...
     meta = boto.utils.get_instance_metadata()
     instance = meta["instance-id"]
     zone = meta["placement"]["availability-zone"]
