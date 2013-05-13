@@ -8,6 +8,60 @@ I have no time for you now. I must first liberate the planet.
 
 [[http://www.imdb.com/character/ch0000027/quotes][Queen Amidala, Star Wars: Episode I - The Phantom Menace]]
 
+** Usage
+
+=amidala= transforms EBS snapshots into AMIs.
+
+*** Preparing a base snapshot
+
+First, you need to create a base snapshot. This base snapshot should contain a minimal operating system and will be used as the basis for all other AMIs you create. Here, we'll create a volume and snapshot it using the Python library =boto=. Before running the following code on an EC2 instance, export your AWS credentials or make sure the instance is running with a suitable IAM profile.
+
+#+BEGIN_SRC python
+>>> import boto.ec2
+>>> import boto.utils
+>>> meta = boto.utils.get_instance_metadata()
+>>> instance = meta["instance-id"]
+>>> zone = meta["placement"]["availability"]
+>>> ec2 = boto.ec2.connect_to_region("us-west-1")
+>>> volume = ec2.create_volume(10, zone)
+>>> ec2.attach_volume(volume.id, instance, "/dev/xvdb")
+#+END_SRC
+
+Now, mount the volume and install the latest Ubuntu Cloud release:
+
+#+BEGIN_SRC
+$ yes | sudo mkfs.ext4 /dev/xvdb
+$ sudo mount /dev/xvdb /mnt
+$ curl -s http://cloud-images.ubuntu.com/releases/precise/release/ubuntu-12.04-server-cloudimg-amd64-root.tar.gz | sudo tar xzf - -C /mnt
+$ sudo sync
+$ sudo umount /mnt
+#+END_SRC
+
+Finally, create a snapshot and tag it so that subsequent runs can discover it. Once the snapshot is created, you can safely delete the volume.
+
+#+BEGIN_SRC python
+>>> ec2.detach_volume(volume.id)
+>>> snapshot = ec2.snapshot_volume(volume.id)
+>>> ec2.create_tags([snapshot.id], {"amidala": "base"})
+>>> ec2.delete_volume(volume.id)
+#+END_SRC
+
+*** Building a system AMI
+
+Once you have a base snapshot, you can build a generic system AMI using a configuration mangaement tool like Chef. =amidala= uses the =amichroot= helper script to perform privileged system commands with =sudo=. When you run =amidala=, it finds the latest snapshot match the tag you specify, mounts a new volume based on that snapshot, and runs a build command you specify inside a chroot on that volume. When the build command finishes, =amidala= snapshots the volume and registers a new AMI.
+
+=amidala= mounts the directory from which the build is run at =/workspace= within the chroot.
+
+#+BEGIN_SRC bash
+#!/bin/bash
+https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/11.04/x86_64/chef_10.26.0-1.ubuntu.11.04_amd64.deb
+#+END_SRC
+
+#+BEGIN_SRC
+$ amidala /bin/sh 
+
+It is only necessary to prepare the base snapshot once for each operating system release. 
+
 ** Development
 
 #+BEGIN_SRC
@@ -31,4 +85,3 @@ IPython support is also available:
 ./bin/pip install ipython
 ./scripts/repl
 #+END_SRC
-
