@@ -38,6 +38,7 @@ def main():
 
     parent = args["<volume>"]
     exe = args["<build>"]
+    device = "/dev/xvdc"
 
     meta = boto.utils.get_instance_metadata()
     instance = meta["instance-id"]
@@ -47,8 +48,6 @@ def main():
 
     log.debug("connecting to %s", region)
     ec2 = boto.ec2.connect_to_region(region)
-
-    device = "/dev/xvdc"
 
     parent = ec2.get_all_volumes([parent])
     snapshot = ec2.create_snapshot(parent.id)
