@@ -1,7 +1,7 @@
 """amidala
 
 Usage:
-        amidala [options] <build>
+        amidala [options] <volume> <build>
 
 Options:
         -h --help       help
@@ -47,36 +47,24 @@ def main():
 
     device = "/dev/xvdc"
 
-    volume = None
-    size = 10
-    if volume:
-        parent = ec2.get_all_volumes([volume])
-        snapshot = ec2.create_snapshot(parent.id)
-        while snap.status != "completed":
-            log.debug("waiting for snapshot %s to complete", snapshot.id)
-            time.sleep(1)
-            snapshot.update()
+    volume = args["<volume>"]
+    parent = ec2.get_all_volumes([volume])
+    snapshot = ec2.create_snapshot(parent.id)
+    while snap.status != "completed":
+        log.debug("waiting for snapshot %s to complete", snapshot.id)
+        time.sleep(1)
+        snapshot.update()
 
-        volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot.id)
-    else:
-        log.debug("creating %dGB volume in %s", size, zone)
-        volume = ec2.create_volume(size, zone)
+    volume = ec2.create_volume(parent.size, parent.zone, snapshot=snapshot.id)
 
     log.debug("attaching volume %s to instance %s at %s", volume.id, instance, device)
     ec2.attach_volume(volume.id, instance, device)
 
     mount = tempfile.mkdtemp()
 
-    
-    log.debug("mounting device %s at temporary mount %s", device, mount)
-    ret = subprocess.call(["sudo", "/bin/mount", device, mount])
-
     exe = args["<build>"]
-    log.debug("running build phase `%s`", exe)    
-    subprocess.call(exe)
-
-    log.debug("umounting temporary mount %s", mount)
-    ret = subprocess.call(["sudo", "/bin/umount", "-l", mount])
+    log.debug("running build in chroot %s at %s: %s", device, mount, exe)
+    ret = subprocess.call(["sudo", "amichroot", device, mount, exe])
 
     log.debug("detaching volume %s from instance %s at %s", volume.id, instance, device)
     ec2.detach_volume(volume.id, instance, device)
