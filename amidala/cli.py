@@ -36,6 +36,9 @@ def main():
         sys.stdout.write(amidala.__version__)
         return 0
 
+    parent = args["<volume>"]
+    exe = args["<build>"]
+
     meta = boto.utils.get_instance_metadata()
     instance = meta["instance-id"]
     zone = meta["placement"]["availability-zone"]
@@ -47,8 +50,7 @@ def main():
 
     device = "/dev/xvdc"
 
-    volume = args["<volume>"]
-    parent = ec2.get_all_volumes([volume])
+    parent = ec2.get_all_volumes([parent])
     snapshot = ec2.create_snapshot(parent.id)
     while snap.status != "completed":
         log.debug("waiting for snapshot %s to complete", snapshot.id)
@@ -62,7 +64,6 @@ def main():
 
     mount = tempfile.mkdtemp()
 
-    exe = args["<build>"]
     log.debug("running build in chroot %s at %s: %s", device, mount, exe)
     ret = subprocess.call(["sudo", "amichroot", device, mount, exe])
 
