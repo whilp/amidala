@@ -57,7 +57,7 @@ def main():
     mount = tempfile.mkdtemp()
 
     log.debug("running build in chroot %s at %s: %s", device, mount, exe)
-    ret = subprocess.call(["sudo", "amichroot", device, mount, exe])
+    ret = subprocess.call(["sudo", "/home/will/amidala/scripts/amichroot", device, mount, exe])
 
     log.debug("detaching volume %s from instance %s at %s", volume.id, instance, device)
     ec2.detach_volume(volume.id, instance, device)
