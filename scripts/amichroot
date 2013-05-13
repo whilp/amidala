@@ -13,5 +13,9 @@ args=
 [ -f "$dev" ] || args="-o loop"
 
 /bin/mount $args "$dev" "$mnt" &&
+/bin/mount --bind "$PWD" "$mnt/workspace" &&
+/bin/mount --bind /etc/resolv.conf "$mnt/etc/resolv.conf" &&
 /usr/sbin/chroot "$mnt" $*
+/bin/umount "$mnt/workspace"
+/bin/umount "$mnt/etc/resolv.conf"
 /bin/umount "$mnt"
