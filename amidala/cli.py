@@ -1,6 +1,7 @@
 """amidala
 
 Usage:
+        amidala [options] <build>
         amidala [options] <base> <build>
 
 Options:
@@ -36,10 +37,6 @@ def main():
         sys.stdout.write(amidala.__version__)
         return 0
 
-    base = args["<base>"]
-    exe = args["<build>"]
-    device = "/dev/xvdc"
-
     meta = boto.utils.get_instance_metadata()
     instance = meta["instance-id"]
     zone = meta["placement"]["availability-zone"]
@@ -49,6 +46,20 @@ def main():
     log.debug("connecting to %s", region)
     ec2 = boto.ec2.connect_to_region(region)
 
+    base = args["<base>"]
+    exe = args["<build>"]
+    device = "/dev/xvdc"
+
+    cmd = build
+    if base is None:
+        cmd = build_base
+
+    return cmd(ec2)
+
+def build_base(ec2):
+    pass
+
+def build(ec2):
     volume = ec2.create_volume(parent.size, parent.zone, snapshot=base)
 
     log.debug("attaching volume %s to instance %s at %s", volume.id, instance, device)
@@ -100,6 +111,6 @@ def main():
         block_device_map=blocks)
 
     log.debug("created ami %s", image)
-
+    
 def log_level(n, default=logging.DEBUG):
     return max(default - (10 * n), 1)
