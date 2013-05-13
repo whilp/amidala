@@ -4,6 +4,15 @@ dev=$1
 mnt=$2
 shift 2
 
+usage () {
+    echo "$0 <device> <mount>" 1>&2
+}
+
+if [ -z "$dev" -o -z "$mnt" ]; then
+    usage
+    exit 1
+fi
+
 args=
 [ -f "$dev" ] || args="-o loop"
 
