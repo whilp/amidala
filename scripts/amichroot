@@ -1,0 +1,12 @@
+#!/bin/sh
+
+dev=$1
+mnt=$2
+shift 2
+
+args=
+[ -f "$dev" ] || args="-o loop"
+
+/bin/mount $args "$dev" "$mnt" &&
+/usr/sbin/chroot "$mnt" $*
+/bin/umount "$mnt"

@@ -10,6 +10,7 @@ meta = dict(
     ],
     scripts = [
         "scripts/amidala",
+        "scripts/amichroot",
     ],
     )
 
