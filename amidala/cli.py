@@ -102,7 +102,7 @@ def poll(fn, expect, timeout=5, interval=.1):
     start = time.time()
     stop = start + timeout
     result = fn()
-    log.debug("polling until %d and %s becomes %s", stop, result, expect)
+    log.debug("polling for %d seconds until %s becomes %s", timeout, result, expect)
     while (time.time() < stop) and (result != expect):
         time.sleep(interval)
         result = fn()
