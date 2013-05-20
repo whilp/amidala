@@ -99,7 +99,7 @@ def attachment(vol, instance, device):
         vol.detach()
         poll(vol.update, "available")
 
-def poll(fn, expect, timeout=5, interval=.1):
+def poll(fn, expect, timeout=10, interval=.1):
     start = time.time()
     stop = start + timeout
     result = fn()
@@ -109,7 +109,6 @@ def poll(fn, expect, timeout=5, interval=.1):
 
     if result != expect:
         raise Timeout("exceeded timeout %d" % timeout)
-
     
 def log_level(n, default=logging.DEBUG):
     return max(default - (10 * n), 1)
