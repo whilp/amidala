@@ -81,7 +81,7 @@ def volume(snapshot, zone):
     vol = snapshot.create_volume(zone)
         
     try:
-        poll(vol.update, "available", timeout=30)
+        poll(vol.update, "available", timeout=60)
         yield vol
     finally:
         vol.delete()
@@ -101,13 +101,11 @@ def attachment(vol, instance, device):
 def poll(fn, expect, timeout=5, interval=.1):
     start = time.time()
     stop = start + timeout
-    log.debug("polling until %d", stop)
     result = fn()
-    log.debug("starting with result %s", result)
+    log.debug("polling until %d and %s becomes %s", stop, result, expect)
     while (time.time() < stop) and (result != expect):
         time.sleep(interval)
         result = fn()
-        log.debug("got result %s", result)
 
     if result != expect:
         log.debug("did not receive result before timeout: %s", expect)
