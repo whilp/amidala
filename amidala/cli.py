@@ -61,20 +61,20 @@ def main():
         base = candidates[-1]
         log.debug("using base %s", base)
 
-    with volume(ec2, instance.placement, snapshot=base, size=size) as vol:
+    with volume(snapshot, instance.placement) as vol:
         device = next_device(instance)
-        with attachment(ec2, vol, instance, device) as dev:
+        
+        with attachment(vol, instance, device) as dev:
             ret = subprocess.call(exe, env={"DEVICE": dev}, shell=True)
 
-        if args["--register"]:
-            image = ec2.register_image(
-                name = "xxx",
-                description = "xxx",
-                architecture = "x86_64",
-                #kernel_id,
-                root_device_name = "/dev/sda1",
-                block_device_map = "xxx")
-
+        image = ec2.register_image(
+            name = "xxx",
+            description = "xxx",
+            architecture = "x86_64",
+            #kernel_id,
+            root_device_name = "/dev/sda1",
+            block_device_map = "xxx")
+        
 @contextlib.contextmanager
 def volume(snapshot, zone):
     size = snapshot.volume_size
