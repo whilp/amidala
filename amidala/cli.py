@@ -1,8 +1,7 @@
 """amidala
 
 Usage:
-        amidala [options] <build>
-        amidala [options] <base> <build>
+        amidala [options] <source> <target> <build>
 
 Options:
         -h --help       help
@@ -41,7 +40,8 @@ def main():
 
     size = int(args["--size"])
     build = args["<build>"]
-    base = args["<base>"]
+    source = args["<source>"]
+    target = args["<target>"]
 
     metadata = boto.utils.get_instance_metadata()
     instance = metadata['instance-id']
@@ -53,13 +53,13 @@ def main():
 
     instance = ec2.get_all_instances([instance])[0].instances[0]
 
-    candidates = ec2.get_all_snapshots(filters={"tag:ami": base}, owner="self")
+    candidates = ec2.get_all_snapshots(filters={"tag:ami": source}, owner="self")
     if not candidates:
-        log.error("failed to find snapshots matching: %s", base)
+        log.error("failed to find snapshots matching: %s", source)
         return 1
 
     snapshot = sorted(candidates, key=lambda x: x.start_time)[-1]
-    log.debug("using base snapshot %s", snapshot.id)
+    log.debug("using source snapshot %s", snapshot.id)
 
     with volume(snapshot, instance.placement) as vol:
         device = next_device(instance)
