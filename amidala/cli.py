@@ -9,8 +9,6 @@ Options:
         -v --version    version
         -V --verbose=n  verbosity [default: 0]
         -s --size=n     size in GB [default: 10]
-        -i --instance   instance
-        -r --region     region
 """
 
 import contextlib
@@ -42,10 +40,13 @@ def main():
         return 0
 
     size = int(args["--size"])
-    instance = args["--instance"]
-    region = args["--region"]
     build = args["<build>"]
     base = args["<base>"]
+
+    metadata = boto.utils.get_instance_metadata()
+    instance = metadata['instance-id']
+    zone = metadata['placement']['availability-zone']
+    region = zone[:-1]
 
     log.debug("connecting to %s", region)
     ec2 = boto.ec2.connect_to_region(region)
