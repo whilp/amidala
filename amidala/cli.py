@@ -80,9 +80,9 @@ def volume(snapshot, zone):
     size = snapshot.volume_size
     log.debug("creating volume in %s from %s", zone, snapshot.id)
     vol = snapshot.create_volume(zone)
-    poll(vol.update, "available")
         
     try:
+        poll(vol.update, "available", timeout=30)
         yield vol
     finally:
         vol.delete()
@@ -91,7 +91,7 @@ def volume(snapshot, zone):
 def attachment(vol, instance, device):
     log.debug("attaching %s to %s at %s", vol.id, instance.id, device)
     vol.attach(instance.id, device)
-    poll(vol.update, "in-use")
+    poll(vol.update, "in-use", timeout=30)
 
     try:
         yield device
@@ -99,7 +99,7 @@ def attachment(vol, instance, device):
         vol.detach()
         poll(vol.update, "available")
 
-def poll(fn, expect, timeout=10, interval=.1):
+def poll(fn, expect, timeout=5, interval=.1):
     start = time.time()
     stop = start + timeout
     result = fn()
