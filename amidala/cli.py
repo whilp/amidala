@@ -101,40 +101,39 @@ def build(ec2, instance, exe, snapshot):
     image = register(snap)
 
 @contextlib.contextmanager
-def volume(ec2, placement, size=None, snapshot=None, timeout=5, interval=.1):
-    if snapshot and size is None:
-        size = snapshot.volume_size
-        log.debug("creating %sGB volume in %s from %s", size, placement, snapshot.id)
-    else:
-        log.debug("creating %sGB volume in %s", size, placement)
-
-    vol = ec2.create_volume(size, placement, snapshot=snapshot)
-    while vol.status != "available":
-        time.sleep(interval)
-        vol.update()
-    if vol.status != "available":
-        raise Timeout("exceeded timeout %d while creating %s" % (timeout, vol.id))
+def volume(snapshot, zone):
+    size = snapshot.volume_size
+    log.debug("creating %sGB volume in %s from %s", size, zone, snapshot.id)
+    vol = snapshot.create_volume(size, placement)
+    poll(vol.update, "available")
         
     try:
         yield vol
     finally:
-        ec2.delete_volume(vol.id)
+        vol.delete()
 
 @contextlib.contextmanager
-def attachment(ec2, vol, instance, device, timeout=5, interval=.1):
+def attachment(vol, instance, device):
     log.debug("attaching %s to %s at %s", vol.id, instance.id, device)
-    ec2.attach_volume(vol.id, instance.id, device)
-    
-    while vol.status != "in-use":
-        time.sleep(interval)
-        vol.update()
-    if vol.status != "in-use":
-        raise Timeout("exceeded timeout %d while attaching %s" % (timeout, vol.id))
+    vol.attach(instance.id, device)
+    poll(vol.update, "in-use")
 
     try:
         yield device
     finally:
-        ec2.detach_volume(vol.id)
+        vol.detach()
+        poll(vol.update, "available")
+
+def poll(fn, expect, timeout=5, interval=.1):
+    start = time.time()
+    stop = start + timeout
+    result = fn()
+    while (time.time() < stop) and (result != expect):
+        time.sleep(interval)
+        result = fn()
+
+    if result != expect:
+        raise Timeout("exceeded timeout %d" % timeout)
 
 def build_base(ec2, size, instance, exe):
     device = next_device(instance.block_device_mapping)
