@@ -75,30 +75,6 @@ def main():
                 root_device_name = "/dev/sda1",
                 block_device_map = "xxx")
     
-def snapshots(ec2, name):
-    matches = ec2.get_all_snapshots(filters={"tag:ami": name})
-    for match in sorted(matches, key=lambda x: x.start_time):
-        yield match
-
-def build(ec2, instance, base):
-    base = snapshots(ec2, base).next()
-
-    with volume(ec2, instance.placement, snapshot=base) as vol:
-        with attachment(ec2, vol, instance) as dev:
-            yield dev
-
-def build_base(ec2, instance, exe, size=10):
-    with volume(ec2, instance.placement, size) as vol:
-        with attachment(ec2, vol.id, instance.id) as dev:
-            subprocess.call(exe, env=dict(DEVICE=dev), shell=True)
-    snap = snapshot(vol.id)
-    
-def build(ec2, instance, exe, snapshot):
-    with volume(ec2, instance.placement, snapshot=snapshot) as vol:
-        with attachment(ec2, vol, instance.id) as dev:
-            subprocess.call(exe, env=dict(DEVICE=dev), shell=True)
-    snap = snapshot(vol.id)
-    image = register(snap)
 
 @contextlib.contextmanager
 def volume(snapshot, zone):
@@ -135,94 +111,10 @@ def poll(fn, expect, timeout=5, interval=.1):
     if result != expect:
         raise Timeout("exceeded timeout %d" % timeout)
 
-def build_base(ec2, size, instance, exe):
-    device = next_device(instance.block_device_mapping)
-
-    log.debug("creating %dGB volume in %s", size, instance.placement)
-    volume = ec2.create_volume(size, instance.placement)
-
-    log.debug("attaching volume %s to %s at %s", volume.id, instance.id, device)
-    ec2.attach_volume(volume.id, instance.id, device)
-    
-    while volume.status != "in-use":
-        time.sleep(1)
-        volume.update()
-
-    log.debug("running build on %s at %s: %s", volume.id, device, exe)
-    env = os.environ.copy()
-    env.update(dict(
-        DEVICE=device,
-    ))        
-    ret = subprocess.call(exe, env=env, shell=True)
-
-    log.debug("detaching %s", volume.id)
-    ec2.detach_volume(volume.id)
-
-    while volume.status != "available":
-        time.sleep(1)
-        volume.update()
-
-    log.debug("snapshotting %s", volume.id)    
-    snapshot = ec2.create_snapshot(volume.id)
-
-    while snapshot.status != "completed":
-        time.sleep(1)
-        snapshot.update()
-
-    snapshot.add_tag("ami", "base")
-
-def build(ec2):
-    volume = ec2.create_volume(parent.size, parent.zone, snapshot=base)
-
-    log.debug("attaching volume %s to instance %s at %s", volume.id, instance, device)
-    ec2.attach_volume(volume.id, instance, device)
-
-    mount = tempfile.mkdtemp()
-
-    log.debug("running build in chroot %s at %s: %s", device, mount, exe)
-    ret = subprocess.call(["sudo", "/home/will/amidala/scripts/amichroo", device, mount, exe])
-
-    log.debug("detaching volume %s from instance %s at %s", volume.id, instance, device)
-    ec2.detach_volume(volume.id, instance, device)
-
-    log.debug("snapshotting %s", volume.id)
-    snap = ec2.create_snapshot(volume.id)
-
-    while volume.status != "available":
-        log.debug("waiting for volume %s to detach", volume.id)
-        time.sleep(1)
-        volume.update()
-
-    log.debug("deleting %s", volume.id)
-    ec2.delete_volume(volume.id)
-
-    while snap.status != "completed":
-        log.debug("waiting for snapshot %s to complete", snap.id)
-        time.sleep(1)
-        snap.update()
-
-    ebs = boto.ec2.blockdevicemapping.EBSBlockDeviceType(snapshot_id=snap.id)
-    blocks = boto.ec2.blockdevicemapping.BlockDeviceMapping()
-    blocks["/dev/sda1"] = ebs
-
-    name = "amidala-test"
-    architecture = "x86_64"
-    root_device_name = "/dev/sda1"
-    log.debug("registering %s image '%s' with root snapshot %s at device %s",
-              architecture,
-              name,
-              snap.id,
-              root_device_name,
-    )
-    image = ec2.register_image(
-        name=name,
-        architecture=architecture,
-        #kernel_id
-        #ramdisk_id
-        root_device_name=root_device_name,
-        block_device_map=blocks)
-
-    log.debug("created ami %s", image)
+def snapshots(ec2, name):
+    matches = ec2.get_all_snapshots(filters={"tag:ami": name})
+    for match in sorted(matches, key=lambda x: x.start_time):
+        yield match
     
 def log_level(n, default=logging.DEBUG):
     return max(default - (10 * n), 1)
