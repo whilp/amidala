@@ -74,13 +74,12 @@ def main():
                 #kernel_id,
                 root_device_name = "/dev/sda1",
                 block_device_map = "xxx")
-    
 
 @contextlib.contextmanager
 def volume(snapshot, zone):
     size = snapshot.volume_size
-    log.debug("creating %sGB volume in %s from %s", size, zone, snapshot.id)
-    vol = snapshot.create_volume(size, placement)
+    log.debug("creating volume in %s from %s", zone, snapshot.id)
+    vol = snapshot.create_volume(zone)
     poll(vol.update, "available")
         
     try:
