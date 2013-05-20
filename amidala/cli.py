@@ -53,13 +53,13 @@ def main():
 
     instance = ec2.get_all_instances([instance])[0].instances[0]
 
-    if base is not None:
-        candidates = sorted(snapshots(ec2, base))
-        if not candidates:
-            log.error("failed to find base snapshots matching: %s", base)
-            return 1
-        base = candidates[-1]
-        log.debug("using base %s", base)
+    candidates = ec2.get_all_snapshots(filters={"tag:ami": base}, owner="self")
+    if not candidates:
+        log.error("failed to find snapshots matching: %s", base)
+        return 1
+
+    snapshot = sorted(candidates, key=lambda x: x.start_time)[-1]
+    log.debug("using base snapshot %s", snapshot.id)
 
     with volume(snapshot, instance.placement) as vol:
         device = next_device(instance)
@@ -110,10 +110,6 @@ def poll(fn, expect, timeout=5, interval=.1):
     if result != expect:
         raise Timeout("exceeded timeout %d" % timeout)
 
-def snapshots(ec2, name):
-    matches = ec2.get_all_snapshots(filters={"tag:ami": name})
-    for match in sorted(matches, key=lambda x: x.start_time):
-        yield match
     
 def log_level(n, default=logging.DEBUG):
     return max(default - (10 * n), 1)
