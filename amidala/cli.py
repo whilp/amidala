@@ -77,7 +77,6 @@ def main():
         
 @contextlib.contextmanager
 def volume(snapshot, zone):
-    size = snapshot.volume_size
     log.debug("creating volume in %s from %s", zone, snapshot.id)
     vol = snapshot.create_volume(zone)
         
@@ -102,12 +101,16 @@ def attachment(vol, instance, device):
 def poll(fn, expect, timeout=5, interval=.1):
     start = time.time()
     stop = start + timeout
+    log.debug("polling until %d", stop)
     result = fn()
+    log.debug("starting with result %s", result)
     while (time.time() < stop) and (result != expect):
         time.sleep(interval)
         result = fn()
+        log.debug("got result %s", result)
 
     if result != expect:
+        log.debug("did not receive result before timeout: %s", expect)
         raise Timeout("exceeded timeout %d" % timeout)
     
 def log_level(n, default=logging.DEBUG):
