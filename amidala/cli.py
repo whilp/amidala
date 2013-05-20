@@ -51,7 +51,7 @@ def main():
     log.debug("connecting to %s", region)
     ec2 = boto.ec2.connect_to_region(region)
 
-    instance = ec2.get_all_instances([instance]).instances[0]
+    instance = ec2.get_all_instances([instance])[0].instances[0]
 
     if base is not None:
         candidates = sorted(snapshots(ec2, base))
